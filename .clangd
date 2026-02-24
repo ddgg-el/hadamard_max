@@ -1,0 +1,5 @@
+CompileFlags:
+  Add:
+    - "-I/Users/davide/Documents/src/informatica_musicale_26/lezione4/system/include"
+    - "-I/Users/davide/Documents/src/informatica_musicale_26/lezione4/system/include/rtaudio"
+    - "-std=c++17"
