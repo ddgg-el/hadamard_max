@@ -2,3 +2,4 @@ externals/
 tests/
 build/
 docs/
+.vscode/
