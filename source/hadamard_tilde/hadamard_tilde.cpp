@@ -1,38 +1,64 @@
 /// @file
-///	@ingroup 	minexamples
+///	@ingroup 	ddgg
 ///	@copyright	Copyright 2018 The Min-DevKit Authors. All rights reserved.
 ///	@license	Use of this source code is governed by the MIT License found in the License.md file.
 
 #include "c74_min.h"
-#include "../shared/signal_routing_objects.h"
+#include "c74_min_api.h"
+#include <cstddef>
+// #include "../shared/signal_routing_objects.h"
+// #include "c74_min_atom.h"
+// #include <memory>
 
-// The xfade~ object inherits all of it's attributes and messages from the signal_routing_base class.
-// The panner~ object does exactly the same, allowing us to share the code between the two similar but opposite classes.
 
-class panner : public signal_routing_base<panner>, public sample_operator<2, 2> {
+class hadamard : public c74::min::object<hadamard>, public c74::min::vector_operator<> {
+private: 
+	std::vector<std::unique_ptr<c74::min::inlet<>>> m_inlets;
+	std::vector<std::unique_ptr<c74::min::outlet<>>> m_outlets;
 public:
-	MIN_DESCRIPTION {"Pan an input to two outputs."};
-	MIN_TAGS {"audio, routing"};
-	MIN_AUTHOR {"Cycling '74"};
-	MIN_RELATED {"xfade~, matrix~"};
+	MIN_DESCRIPTION {"Walsh-Hadamard Transform"};
+	MIN_TAGS {"audio, processing"};
+	MIN_AUTHOR {"Davide Gagliardi"};
 
-	inlet<>  in1 {this, "(signal) Input 1"};
-	inlet<>  in_pos {this, "(signal) Position between them (0..1)"};
-	outlet<> out1 {this, "(signal) Left Output", "signal"};
-	outlet<> out2 {this, "(signal) Right Output", "signal"};
+	int m_channels = 0;
 
+	hadamard(const c74::min::atoms& args = {}) {
+		if(args.size() > 0) {
+			m_channels = args[0];	
+		} else {
+			m_channels = 4;
+		}
+		auto inlet_count = m_channels;
+		auto outlet_count = m_channels;
 
-	/// Process one sample
+		for (auto i = 0; i < int(inlet_count); ++i) {
+			    auto an_inlet = std::make_unique<c74::min::inlet<>>(this, "(signal) an input channel", "signal");
+				auto an_outlet = std::make_unique<c74::min::outlet<>>(this, "(signal) an outputchannel", "signal");
+				m_inlets.push_back(std::move(an_inlet));
+				m_outlets.push_back(std::move(an_outlet));
+		}	
+	}
 
-	samples<2> operator()(sample input, sample position = 0.5) {
-		auto weight1 = this->weight1;
-		auto weight2 = this->weight2;
+	~hadamard() {}
 
-		if (in_pos.has_signal_connection())
-			std::tie(weight1, weight2) = calculate_weights(mode, position);
-
-		return { {input * weight1, input * weight2}};
+	c74::min::message<> dspsetup { this, "dspsetup", 
+    MIN_FUNCTION {
+		c74::min::number samplerate = args[0];
+		int vectorsize = args[1];
+		return {};
 	}
 };
 
-MIN_EXTERNAL(panner);
+
+	void operator()(c74::min::audio_bundle input, c74::min::audio_bundle output) {
+		for(auto ch = 0; ch < output.channel_count(); ++ch) {
+			auto in = input.samples(ch);
+			auto out = output.samples(ch);
+			for (auto sample = 0; sample < output.frame_count(); ++sample) {
+				out[sample] = in[sample];
+			}
+		}
+	}
+};
+
+MIN_EXTERNAL(hadamard);

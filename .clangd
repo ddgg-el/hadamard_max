@@ -1,5 +1,7 @@
 CompileFlags:
   Add:
-    - "-I/Users/davide/Documents/src/informatica_musicale_26/lezione4/system/include"
-    - "-I/Users/davide/Documents/src/informatica_musicale_26/lezione4/system/include/rtaudio"
+    - "-I/Users/davide/Documents/src/hadamard_max/min-api/include"
+    - "-I/Users/davide/Documents/src/hadamard_max/min-api/max-sdk-base/c74support"
+    - "-I/Users/davide/Documents/src/hadamard_max/min-api/max-sdk-base/c74support/max-includes"
+    - "-I/Users/davide/Documents/src/hadamard_max/min-api/test"
     - "-std=c++17"

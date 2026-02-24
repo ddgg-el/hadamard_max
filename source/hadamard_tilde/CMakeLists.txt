@@ -19,8 +19,8 @@ include_directories(
 
 set( SOURCE_FILES
 	${PROJECT_NAME}.cpp
-	../shared/signal_routing_objects.h
-	../shared/signal_routing_objects.cpp
+	# ../shared/signal_routing_objects.h
+	# ../shared/signal_routing_objects.cpp
 )
 
 

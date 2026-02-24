@@ -2,7 +2,7 @@
 Names should be added to this file with this pattern:
 
 For individuals:
-   `Name <email address>`
+   `Davide Gagliardi <info@davidegagliardi.eu>`
 
 For organizations:
    `Organization <fnmatch pattern>`

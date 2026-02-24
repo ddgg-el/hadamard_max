@@ -1,3 +1,4 @@
 externals/
-./tests/
-build
+tests/
+build/
+docs/
