@@ -18,7 +18,7 @@ private:
 public:
 	MIN_DESCRIPTION {"Walsh-Hadamard Transform"};
 	MIN_TAGS {"audio, processing"};
-	MIN_AUTHOR {"Davide Gagliardi"};
+	MIN_AUTHOR {"Davide Gagliardi, Davide Bardi"};
 
 	int m_channels = 0;
 
@@ -43,11 +43,11 @@ public:
 
 	c74::min::message<> dspsetup { this, "dspsetup", 
     MIN_FUNCTION {
-		c74::min::number samplerate = args[0];
-		int vectorsize = args[1];
-		return {};
-	}
-};
+			c74::min::number samplerate = args[0];
+			int vectorsize = args[1];
+			return {};
+		}
+	};	
 
 
 	void operator()(c74::min::audio_bundle input, c74::min::audio_bundle output) {
