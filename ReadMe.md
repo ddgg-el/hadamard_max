@@ -2,10 +2,10 @@ Walsh-Hdamard Transform
 -----------------------
 
 ```zsh
-% git clone https://github.com/ddgg-el/hadamard_max --recursive
+git clone https://github.com/ddgg-el/hadamard_max --recursive
 ```
 
 ```zsh
-% cmake -B build .
-% cmake --build build 
+cmake -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Debug .
+cmake --build build 
 ```
