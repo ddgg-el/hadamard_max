@@ -11,6 +11,7 @@ include(${C74_MIN_API_DIR}/script/min-pretarget.cmake)
 # MAX EXTERNAL
 #############################################################
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 
 include_directories( 
 	"${C74_INCLUDES}"
