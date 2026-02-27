@@ -8,6 +8,7 @@
 #include "c74_min_doc.h"
 #include "c74_min_logger.h"
 #include "c74_min_message.h"
+#include <algorithm>
 #include <cstddef>
 #include <string>
 #include <vector>
@@ -150,7 +151,7 @@ public:
 			fwht(m_frame.data(), output.channel_count());
 
 			for (auto ch = 0; ch < output.channel_count(); ++ch) {
-				output.samples(ch)[sample] = m_frame[ch] * m_norm;
+				output.samples(ch)[sample] = CLAMP(m_frame[ch] * m_norm, -1, 1);
 			}
 		}
 	}
