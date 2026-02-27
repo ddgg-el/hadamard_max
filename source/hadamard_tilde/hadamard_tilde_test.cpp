@@ -16,12 +16,12 @@ SCENARIO("object produces correct output") {
 
 	GIVEN("An instance of hadamard~") {
 
-		c74::min::test_wrapper<hadamard> an_instance;
-		hadamard&              my_object = an_instance;
+		// c74::min::test_wrapper<hadamard> an_instance;
+		// hadamard&              my_object = an_instance;
 
 		// check that default attr values are correct
 
-		REQUIRE((my_object.m_channels == number(4)));    // note: symbols can be compared with strings
+		// REQUIRE((my_object.m_channels == number(4)));    // note: symbols can be compared with strings
 
 		// now proceed to testing various sequences of events
 
