@@ -6,6 +6,8 @@
 #include "c74_min.h"
 #include "c74_min_api.h"
 #include "c74_min_doc.h"
+#include "c74_min_logger.h"
+#include "c74_min_message.h"
 #include <cstddef>
 #include <string>
 #include <vector>
@@ -18,7 +20,7 @@ private:
 	double m_norm = 1.0; 
 	int m_order = 1;
 	int m_channels = static_cast<int>(pow(2, m_order)) ; // could be fix
-
+	
 	void setNorm(bool normalized) {
 		m_norm = normalized ? 1.0 / std::sqrt(static_cast<double>(m_channels)) : 1.0;
 	}
@@ -71,6 +73,7 @@ public:
 	
 		m_channels = static_cast<int>(pow(2, m_order));
 		m_frame.assign(m_channels, 0.0);
+		m_coefs.assign(m_channels, 1.0);
 
 		for (auto i = 0; i < m_channels; ++i) {
 			    auto an_inlet = std::make_unique<c74::min::inlet<>>(this, "(signal) input channel " + std::to_string(i + 1), "signal");
@@ -100,6 +103,26 @@ public:
 		}
 	};
 
+	c74::min::message<> coefs {this, "coefs", "Coefficients used to multiply the individual inputs of the matrix",
+		MIN_FUNCTION {
+			
+			if (args.size() == m_channels){
+				for (int i = 0; i < m_channels; i++){
+					m_coefs[i] = (double)args[i];
+					// cout << m_coefs[i] << " ";
+				}
+				// cout << c74::min::endl;
+			} else if (args.size() > m_channels) {
+				cerr << "Too many coefs " << args.size() << " coefs! Need " << m_channels << c74::min::endl;
+			} else if (args.size() < m_channels){
+				cerr << "Only " << args.size() << " coefs! Need " << m_channels << c74::min::endl;
+			}
+
+			return {};
+
+		}
+	};
+
 	/**
 	* @brief (called when when Max compiles the signal chain)
 	* UNUSED
@@ -121,7 +144,7 @@ public:
 	void operator()(c74::min::audio_bundle input, c74::min::audio_bundle output) {
 		for(auto sample = 0; sample < output.frame_count(); ++sample) {
 			for (auto ch = 0; ch < output.channel_count(); ++ch) {
-				m_frame[ch] = input.samples(ch)[sample] * 0.5;
+				m_frame[ch] = input.samples(ch)[sample] * m_coefs[ch];
 			}
 
 			fwht(m_frame.data(), output.channel_count());
@@ -168,6 +191,7 @@ private:
 	 * 
 	 */
 	std::vector<double> m_frame;
+	std::vector<double> m_coefs;
 
 };
 
