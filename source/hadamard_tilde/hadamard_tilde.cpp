@@ -90,11 +90,12 @@ public:
 	 * @brief callback for message | normalize $1 | from Max
 	 * (an alternative to set the normalized attribute)
 	 */
-	c74::min::message<> normalize { this, "normalize", "Normalize the matrix output values. The message value should be wither 1 or 0.", c74::min::message_type::int_argument, 
+	c74::min::message<> normalize { this, "normalize", "Normalize the matrix output values. The message value should be wither 1 or 0.", 
 		MIN_FUNCTION {
-			if(args.empty()) return {};
-			int a = args[0];
-			setNorm((bool)CLAMP(a, 0, 1));
+			if(args.empty() || !m_initialized) return {};
+			int val = static_cast<int>(args[0]);
+			setNorm((bool)CLAMP(val, 0, 1));
+			normalized = val;
 			return {};
 		}
 	};

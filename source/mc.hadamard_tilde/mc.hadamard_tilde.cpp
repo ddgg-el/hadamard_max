@@ -5,17 +5,9 @@
 
 #include "c74_min.h"
 #include "c74_min_api.h"
-#include "c74_min_doc.h"
-#include "c74_min_inlet.h"
-#include "c74_min_logger.h"
-#include "c74_min_message.h"
-#include "c74_min_operator_mc.h"
-#include "c74_min_operator_vector.h"
-#include <cstddef>
-#include <vector>
 
-
-long hadamard_multichanneloutputs(c74::max::t_object* x, long index, long count);
+// callback for Max's call to 'multichanneloutputs' (max-sdk style)
+long hadamard_multichanneloutputs(c74::max::t_object* x);
 
 class mc_hadamard : public c74::min::object<mc_hadamard>, public c74::min::mc_operator<> {
 private:
@@ -33,8 +25,12 @@ public:
 	MIN_TAGS {"audio, processing"};
 	MIN_AUTHOR {"Davide Gagliardi - Davide Bardi"};
 
+	
 	int m_channels = static_cast<int>(pow(2, m_order)) ; // could be fix
 
+	/**
+	 * @brief multichannel IO
+	 */
 	c74::min::inlet<> m_inlet { this, "(multichannelsignal) input"};
 	c74::min::outlet<> m_outlet { this, "(multichannelsignal) output", "multichannelsignal"};
 
@@ -83,13 +79,6 @@ public:
 		m_channels = static_cast<int>(pow(2, m_order));
 		m_frame.assign(m_channels, 0.0);
 
-		// for (auto i = 0; i < m_channels; ++i) {
-		// 	    auto an_inlet = std::make_unique<c74::min::inlet<>>(this, "(signal) an input channel", "signal");
-		// 		auto an_outlet = std::make_unique<c74::min::outlet<>>(this, "(signal) an outputchannel", "signal");
-		// 		m_inlets.push_back(std::move(an_inlet));
-		// 		m_outlets.push_back(std::move(an_outlet));
-		// }
-
 		m_initialized = true;
 	}
 
@@ -102,7 +91,7 @@ public:
 	 * @brief callback for message | normalize $1 | from Max
 	 * (an alternative to set the normalized attribute)
 	 */
-	c74::min::message<> normalize { this, "normalize", "Normalize the matrix output values. The message value should be wither 1 or 0.", c74::min::message_type::int_argument, 
+	c74::min::message<> normalize { this, "normalize", "Normalize the matrix output values. The message value should be wither 1 or 0.", 
 		MIN_FUNCTION {
 			if(args.empty()) return {};
 			int a = args[0];
@@ -111,9 +100,12 @@ public:
 		}
 	};
 
+	/**
+	 * @brief max-sdk style 'class_setup' implementation to add the 'multichanneloutputs' method
+	 */
 	c74::min::message<> maxclass_setup { this, "maxclass_setup", 
 		MIN_FUNCTION {
-			this->cout << "Set up mc.hadamard~ class" << c74::min::endl;
+			UNUSED(this);   // silences compiler warning since we don't access class members
 			c74::max::t_class* c = args[0];
 			c74::max::class_addmethod(c, reinterpret_cast<c74::max::method>(hadamard_multichanneloutputs),
                 "multichanneloutputs", c74::max::A_CANT, 0);
@@ -129,15 +121,7 @@ public:
     MIN_FUNCTION {
 			samplerate(args[0]);
 			vector_size(args[1]);
-			
 			return {};
-		}
-	};
-
-	c74::min::message<> multichanneloutputs { this, "multichanneloutputs", 
-		MIN_FUNCTION {
-			cout << "YEAAAAAAAHHHHH!" << c74::min::endl;
-			return { m_channels };
 		}
 	};
 
@@ -148,7 +132,6 @@ public:
 	 * @param output
 	 */
 	void operator()(c74::min::audio_bundle input, c74::min::audio_bundle output) {
-		// c74::min::error(m_channels != input.channel_count(), "Wrong Input channels! %i");
 		for(auto sample = 0; sample < output.frame_count(); ++sample) {
 			for (auto ch = 0; ch < output.channel_count(); ++ch) {
 				if(ch < input.channel_count()) {
@@ -184,11 +167,7 @@ private:
 			}
 		}
 	}
-	/**
-	 * @brief inlets and outlets
-	 */
-	// std::vector<std::unique_ptr<c74::min::inlet<>>> m_inlets;
-	// std::vector<std::unique_ptr<c74::min::outlet<>>> m_outlets;
+	
 	/**
 	 * @brief an `audio_bundle.samples()` (see #`operator()`) has the shape:
 	 
@@ -205,9 +184,17 @@ private:
 
 };
 
-long hadamard_multichanneloutputs(c74::max::t_object* x, long index, long count) {
+/**
+ * @brief Notify the number of output channel 
+ * 
+ * @param x a t_class* to the mc.hadamard~ instance
+ * @param index the outlet index
+
+ * @return long 
+ */
+long hadamard_multichanneloutputs(c74::max::t_object* x) {
 	auto* wrapper = reinterpret_cast<c74::min::minwrap<mc_hadamard>*>(x);
-	return wrapper->m_min_object.m_channels;;
+	return wrapper->m_min_object.m_channels;
 };
 
 MIN_EXTERNAL(mc_hadamard);
