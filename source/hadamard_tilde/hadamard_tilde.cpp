@@ -5,6 +5,7 @@
 
 #include "c74_min.h"
 #include "c74_min_api.h"
+#include "c74_min_doc.h"
 #include <cstddef>
 #include <vector>
 
@@ -12,10 +13,10 @@
 class hadamard : public c74::min::object<hadamard>, public c74::min::vector_operator<> {
 private:
 	// all these members are used in attribute<> normalized setter, hence they need to be initialized first
-	bool m_initialized = false; // used in  
-	double m_norm = 1.0 ; // used in attribute<> normalized setter 
-	int m_order = 1; // used to calculate m_channels
-	int m_channels = static_cast<int>(pow(2, m_order)) ; //used in attribute<bool> normalized setter
+	bool m_initialized = false;  
+	double m_norm = 1.0; 
+	int m_order = 1;
+	int m_channels = static_cast<int>(pow(2, m_order)) ; // could be fix
 
 	void setNorm(bool normalized) {
 		m_norm = normalized ? 1.0 / std::sqrt(static_cast<double>(m_channels)) : 1.0;
@@ -25,11 +26,10 @@ public:
 	MIN_DESCRIPTION {"Walsh-Hadamard Transform Object"};
 	MIN_TAGS {"audio, processing"};
 	MIN_AUTHOR {"Davide Gagliardi - Davide Bardi"};
-
 	/**
-	 * @brief first object's argument -> order (int) | range (0 - 7) see constructor for the logic
+	 * @brief first object's argument -> order (int) | range (0 - 7) see constructor
 	 */
-	c74::min::argument<c74::min::number> order_arg { this, "order", "Order of the matrix", true};
+	c74::min::argument<c74::min::number> order_arg { this, "order", "Order of the matrix.", true};
 
 	/**
 	 * @brief @normalized 0|1 default 0 (no normalization)
@@ -52,7 +52,6 @@ public:
 	 * @param args (only one int (order) expected)
 	 */
 	hadamard(const c74::min::atoms& args = {}) {
-		cout << "CONSTRUCTOR!" << c74::min::endl;
 		if(args.size() > 0) {
 			m_order = static_cast<int>(args[0]);	
 		} else {
@@ -91,9 +90,8 @@ public:
 	 * @brief callback for message | normalize $1 | from Max
 	 * (an alternative to set the normalized attribute)
 	 */
-	c74::min::message<> normalize { this, "normalize", "Normalize the output values", 
+	c74::min::message<> normalize { this, "normalize", "Normalize the matrix output values. The message value should be wither 1 or 0.", c74::min::message_type::int_argument, 
 		MIN_FUNCTION {
-			cout << "normalize message!" << c74::min::endl;
 			if(args.empty()) return {};
 			int a = args[0];
 			setNorm((bool)CLAMP(a, 0, 1));
@@ -102,8 +100,8 @@ public:
 	};
 
 	/**
-	* @brief // UNUSED
-	* (called when when Max compiles the signal chain)
+	* @brief (called when when Max compiles the signal chain)
+	* UNUSED
 	 */
 	c74::min::message<> dspsetup { this, "dspsetup", 
     MIN_FUNCTION {
@@ -133,7 +131,12 @@ public:
 		}
 	}
 private: 
-
+	/**
+	 * @brief Fast Walsh-Hadamard Transform
+	 * 
+	 * @param a matrix audio input vector 
+	 * @param n the size of the vector (n_channels)
+	 */
 	void fwht(double *a, size_t n) {
 		for (size_t h=1; h < n; h *= 2){
 			for (size_t i = 0; i < n; i += h*2) {
@@ -146,9 +149,23 @@ private:
 			}
 		}
 	}
-
+	/**
+	 * @brief inlets and outlets
+	 */
 	std::vector<std::unique_ptr<c74::min::inlet<>>> m_inlets;
 	std::vector<std::unique_ptr<c74::min::outlet<>>> m_outlets;
+	/**
+	 * @brief an `audio_bundle.samples()` (see #`operator()`) has the shape:
+	 
+	 `[ch1[s1,s2,s3....], ch2[s1,s2,s3...], ch3[s1,s2,s3...]...]`
+	 
+	 but the matrix need one sample from each channel at a time:
+	 ```[ch1[s1], ch2[s1], ch3[s1]...]
+	 [ch1[s2], ch2[s2], ch3[s3]...]```
+	 
+	 * `m_frame` holds these arrays
+	 * 
+	 */
 	std::vector<double> m_frame;
 
 };
