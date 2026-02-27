@@ -3,8 +3,8 @@
 		"fileversion" : 1,
 		"appversion" : 		{
 			"major" : 8,
-			"minor" : 5,
-			"revision" : 1,
+			"minor" : 6,
+			"revision" : 5,
 			"architecture" : "x64",
 			"modernui" : 1
 		}
@@ -57,8 +57,8 @@
 					"numinlets" : 2,
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
-					"patching_rect" : [ 57.0, 230.0, 77.0, 22.0 ],
-					"text" : "normalize $1"
+					"patching_rect" : [ 57.0, 230.0, 84.0, 22.0 ],
+					"text" : "normalized $1"
 				}
 
 			}
