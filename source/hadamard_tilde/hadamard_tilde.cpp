@@ -7,6 +7,7 @@
 #include "c74_min_api.h"
 #include "c74_min_doc.h"
 #include <cstddef>
+#include <string>
 #include <vector>
 
 
@@ -72,8 +73,8 @@ public:
 		m_frame.assign(m_channels, 0.0);
 
 		for (auto i = 0; i < m_channels; ++i) {
-			    auto an_inlet = std::make_unique<c74::min::inlet<>>(this, "(signal) an input channel", "signal");
-				auto an_outlet = std::make_unique<c74::min::outlet<>>(this, "(signal) an outputchannel", "signal");
+			    auto an_inlet = std::make_unique<c74::min::inlet<>>(this, "(signal) input channel " + std::to_string(i + 1), "signal");
+				auto an_outlet = std::make_unique<c74::min::outlet<>>(this, "(signal) output channel " + std::to_string(i+1), "signal");
 				m_inlets.push_back(std::move(an_inlet));
 				m_outlets.push_back(std::move(an_outlet));
 		}
@@ -120,7 +121,7 @@ public:
 	void operator()(c74::min::audio_bundle input, c74::min::audio_bundle output) {
 		for(auto sample = 0; sample < output.frame_count(); ++sample) {
 			for (auto ch = 0; ch < output.channel_count(); ++ch) {
-				m_frame[ch] = input.samples(ch)[sample];
+				m_frame[ch] = input.samples(ch)[sample] * 0.5;
 			}
 
 			fwht(m_frame.data(), output.channel_count());
