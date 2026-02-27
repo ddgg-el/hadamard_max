@@ -4,3 +4,4 @@ build/
 docs/
 .vscode/
 .cache/
+.DS_Store

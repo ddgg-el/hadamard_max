@@ -108,7 +108,7 @@ public:
 			
 			if (args.size() == m_channels){
 				for (int i = 0; i < m_channels; i++){
-					m_coefs[i] = (double)args[i];
+					m_coefs[i] = static_cast<double>(args[i]);
 					// cout << m_coefs[i] << " ";
 				}
 				// cout << c74::min::endl;
