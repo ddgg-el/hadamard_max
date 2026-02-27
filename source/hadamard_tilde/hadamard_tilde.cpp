@@ -150,7 +150,9 @@ public:
 
 			fwht(m_frame.data(), output.channel_count());
 
+			
 			for (auto ch = 0; ch < output.channel_count(); ++ch) {
+				// m_frame.data() = static_cast<bool>(m_norm) ? CLAMP(m_frame[ch] * m_norm, -1, 1) : m_frame.data();
 				output.samples(ch)[sample] = CLAMP(m_frame[ch] * m_norm, -1, 1);
 			}
 		}
