@@ -33,7 +33,7 @@ public:
 	 */
 	c74::min::inlet<> m_inlet { this, "(multichannelsignal) input"};
 	c74::min::outlet<> m_outlet { this, "(multichannelsignal) output", "multichannelsignal"};
-
+	c74::min::outlet<> m_status_outlet { this, "(anything) dump outlet"};
 	/**
 	 * @brief first object's argument -> order (int) | range (0 - 7) see constructor
 	 */
@@ -78,6 +78,7 @@ public:
 	
 		m_channels = static_cast<int>(pow(2, m_order));
 		m_frame.assign(m_channels, 0.0);
+		m_coeffs.assign(m_channels, 1.0);
 
 		m_initialized = true;
 	}
@@ -91,11 +92,49 @@ public:
 	 * @brief callback for message | normalize $1 | from Max
 	 * (an alternative to set the normalized attribute)
 	 */
-	c74::min::message<> normalize { this, "normalize", "Normalize the matrix output values. The message value should be wither 1 or 0.", 
+	c74::min::message<> normalize { this, "normalize", "Normalize the matrix output values. The message value should be either 1 or 0.", 
 		MIN_FUNCTION {
 			if(args.empty()) return {};
 			int a = args[0];
 			setNorm((bool)CLAMP(a, 0, 1));
+			return {};
+		}
+	};
+
+	c74::min::message<> input_coeffs { this, "input_coeffs", "Scale the input signal by a scalar. Sending this message will cause the dump outlet to output the value of the coefficients", 
+		MIN_FUNCTION {
+			if(args.empty() || !m_initialized) return {};
+			if(args.size() > m_channels) {
+				int additional_coeffs = args.size() - m_channels;
+				cwarn << "List too long. Ignoring last ";
+				cwarn << (additional_coeffs == 1 ? "coefficient" : std::to_string(additional_coeffs) + " coefficients") << c74::min::endl;
+			}
+			for (int ch = 0; ch < m_coeffs.size(); ++ch) {
+				if(ch < args.size()) {
+					m_coeffs[ch] = args[ch];
+				} else {
+					cwarn << "Missing coefficient for input channel " << ch+1 << ". Setting it to 0" << c74::min::endl;
+					m_coeffs[ch] = 0.0;
+				}
+			}
+			dump_coeffs();
+			return {};
+		}
+	};
+
+	c74::min::message<> reset_coeffs { this, "reset_coeffs", "Set all the input coefficients to 1. Sending this message will cause the dump outlet to output the value of the coefficients", 
+		MIN_FUNCTION {
+			for (int ch = 0; ch < m_coeffs.size(); ++ch) {
+				m_coeffs[ch] = 1.0;
+			}
+			dump_coeffs();
+			return {};
+		}
+	};
+
+	c74::min::message<> dump { this, "dump", "output the state of the object from the dump outlet", 
+		MIN_FUNCTION{
+			dump_coeffs();
 			return {};
 		}
 	};
@@ -135,7 +174,7 @@ public:
 		for(auto sample = 0; sample < output.frame_count(); ++sample) {
 			for (auto ch = 0; ch < output.channel_count(); ++ch) {
 				if(ch < input.channel_count()) {
-					m_frame[ch] = input.samples(ch)[sample];
+					m_frame[ch] = input.samples(ch)[sample] * m_coeffs[ch];
 				} else {
 					m_frame[ch] = 0;
 				}
@@ -167,6 +206,16 @@ private:
 			}
 		}
 	}
+
+	void dump_coeffs() {
+		c74::min::atoms coeff_list;
+			coeff_list.push_back("input_coeffs");
+			for (auto coeff : m_coeffs) {
+				coeff_list.push_back(coeff);
+			}
+			
+			m_status_outlet.send(coeff_list);
+	}
 	
 	/**
 	 * @brief an `audio_bundle.samples()` (see #`operator()`) has the shape:
@@ -181,6 +230,7 @@ private:
 	 * 
 	 */
 	std::vector<double> m_frame;
+	std::vector<double> m_coeffs;
 
 };
 

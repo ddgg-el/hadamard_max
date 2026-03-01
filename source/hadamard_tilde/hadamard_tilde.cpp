@@ -99,7 +99,7 @@ public:
 		}
 	};
 
-	c74::min::message<> input_coeffs { this, "input_coeffs", "Scale the input signal by a scalar", 
+	c74::min::message<> input_coeffs { this, "input_coeffs", "Scale the input signal by a scalar. Sending this message will cause the dump outlet to output the value of the coefficients", 
 		MIN_FUNCTION {
 			if(args.empty() || !m_initialized) return {};
 			if(args.size() > m_channels) {
@@ -120,7 +120,7 @@ public:
 		}
 	};
 
-	c74::min::message<> reset_coeffs { this, "reset_coeffs", "Set all the input coefficients to 1", 
+	c74::min::message<> reset_coeffs { this, "reset_coeffs", "Set all the input coefficients to 1. Sending this message will cause the dump outlet to output the value of the coefficients", 
 		MIN_FUNCTION {
 			for (int ch = 0; ch < m_coeffs.size(); ++ch) {
 				m_coeffs[ch] = 1.0;
