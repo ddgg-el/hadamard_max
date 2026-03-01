@@ -32,7 +32,7 @@ public:
 	 * @brief @normalized 0|1 default 0 (no normalization)
 	 */
 	c74::min::attribute<bool> normalized { this, 
-		"normalized", false,
+		"normalized", true,
 		c74::min::description { "Normalize the output by 1 / sqrt(num_channels)" },
 		c74::min::setter { MIN_FUNCTION {
 			if(initialized()){
@@ -77,6 +77,7 @@ public:
 		}
 
 		m_status_outlet = std::make_unique<c74::min::outlet<>>( this, "(anything) dump outlet"); 
+		setNorm(normalized);
 		m_initialized = true;
 	}
 
@@ -99,7 +100,7 @@ public:
 		}
 	};
 
-	c74::min::message<> input_coeffs { this, "input_coeffs", "Scale the input signal by a scalar. Sending this message will cause the dump outlet to output the value of the coefficients", 
+	c74::min::message<> input_coeffs { this, "input_coeffs", "Scale the input signals by a scalar. Sending this message will cause the dump outlet to output the value of the coefficients", 
 		MIN_FUNCTION {
 			if(args.empty() || !m_initialized) return {};
 			if(args.size() > m_channels) {

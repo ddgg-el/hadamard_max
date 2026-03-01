@@ -43,8 +43,8 @@ public:
 	 * @brief @normalized 0|1 default 0 (no normalization)
 	 */
 	c74::min::attribute<bool> normalized { this, 
-		"normalized", false,
-		c74::min::description { "Normalize the output by 1 / sqrt(num_channels)" },
+		"normalized", true,
+		c74::min::description { "Normalize the output by 1 / sqrt( num_channels )" },
 		c74::min::setter { MIN_FUNCTION {
 			if(initialized()){
 				int a = args[0];
@@ -79,6 +79,7 @@ public:
 		m_channels = static_cast<int>(pow(2, m_order));
 		m_frame.assign(m_channels, 0.0);
 		m_coeffs.assign(m_channels, 1.0);
+		setNorm(normalized);
 
 		m_initialized = true;
 	}
@@ -101,7 +102,7 @@ public:
 		}
 	};
 
-	c74::min::message<> input_coeffs { this, "input_coeffs", "Scale the input signal by a scalar. Sending this message will cause the dump outlet to output the value of the coefficients", 
+	c74::min::message<> input_coeffs { this, "input_coeffs", "Scale the input signals by a scalar. Sending this message will cause the dump outlet to output the value of the coefficients", 
 		MIN_FUNCTION {
 			if(args.empty() || !m_initialized) return {};
 			if(args.size() > m_channels) {
