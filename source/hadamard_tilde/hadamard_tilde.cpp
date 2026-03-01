@@ -72,8 +72,8 @@ public:
 		m_frame.assign(m_channels, 0.0);
 
 		for (auto i = 0; i < m_channels; ++i) {
-			    auto an_inlet = std::make_unique<c74::min::inlet<>>(this, "(signal) an input channel", "signal");
-				auto an_outlet = std::make_unique<c74::min::outlet<>>(this, "(signal) an outputchannel", "signal");
+			    auto an_inlet = std::make_unique<c74::min::inlet<>>(this, "(signal) input channel " + std::to_string(i + 1), "signal");
+				auto an_outlet = std::make_unique<c74::min::outlet<>>(this, "(signal) output channel " + std::to_string(i + 1), "signal");
 				m_inlets.push_back(std::move(an_inlet));
 				m_outlets.push_back(std::move(an_outlet));
 		}
