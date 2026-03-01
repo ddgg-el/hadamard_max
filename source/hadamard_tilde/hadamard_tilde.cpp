@@ -5,10 +5,6 @@
 
 #include "c74_min.h"
 #include "c74_min_api.h"
-#include "c74_min_doc.h"
-#include <cstddef>
-#include <vector>
-
 
 class hadamard : public c74::min::object<hadamard>, public c74::min::vector_operator<> {
 private:
@@ -17,6 +13,7 @@ private:
 	double m_norm = 1.0; 
 	int m_order = 1;
 	int m_channels = static_cast<int>(pow(2, m_order)) ; // could be fix
+	std::unique_ptr<c74::min::outlet<>> m_status_outlet;
 
 	void setNorm(bool normalized) {
 		m_norm = normalized ? 1.0 / std::sqrt(static_cast<double>(m_channels)) : 1.0;
@@ -70,6 +67,7 @@ public:
 	
 		m_channels = static_cast<int>(pow(2, m_order));
 		m_frame.assign(m_channels, 0.0);
+		m_coeffs.assign(m_channels, 1.0);
 
 		for (auto i = 0; i < m_channels; ++i) {
 			    auto an_inlet = std::make_unique<c74::min::inlet<>>(this, "(signal) an input channel", "signal");
@@ -78,6 +76,7 @@ public:
 				m_outlets.push_back(std::move(an_outlet));
 		}
 
+		m_status_outlet = std::make_unique<c74::min::outlet<>>( this, "(anything) dump outlet"); 
 		m_initialized = true;
 	}
 
@@ -96,6 +95,44 @@ public:
 			int val = static_cast<int>(args[0]);
 			setNorm((bool)CLAMP(val, 0, 1));
 			normalized = val;
+			return {};
+		}
+	};
+
+	c74::min::message<> input_coeffs { this, "input_coeffs", "Scale the input signal by a scalar", 
+		MIN_FUNCTION {
+			if(args.empty() || !m_initialized) return {};
+			if(args.size() > m_channels) {
+				int additional_coeffs = args.size() - m_channels;
+				cwarn << "List too long. Ignoring last ";
+				cwarn << (additional_coeffs == 1 ? "coefficient" : std::to_string(additional_coeffs) + " coefficients") << c74::min::endl;
+			}
+			for (int ch = 0; ch < m_coeffs.size(); ++ch) {
+				if(ch < args.size()) {
+					m_coeffs[ch] = args[ch];
+				} else {
+					cwarn << "Missing coefficient for input channel " << ch+1 << ". Setting it to 0" << c74::min::endl;
+					m_coeffs[ch] = 0.0;
+				}
+			}
+			dump_coeffs();
+			return {};
+		}
+	};
+
+	c74::min::message<> reset_coeffs { this, "reset_coeffs", "Set all the input coefficients to 1", 
+		MIN_FUNCTION {
+			for (int ch = 0; ch < m_coeffs.size(); ++ch) {
+				m_coeffs[ch] = 1.0;
+			}
+			dump_coeffs();
+			return {};
+		}
+	};
+
+	c74::min::message<> dump { this, "dump", "output the state of the object from the dump outlet", 
+		MIN_FUNCTION{
+			dump_coeffs();
 			return {};
 		}
 	};
@@ -121,7 +158,7 @@ public:
 	void operator()(c74::min::audio_bundle input, c74::min::audio_bundle output) {
 		for(auto sample = 0; sample < output.frame_count(); ++sample) {
 			for (auto ch = 0; ch < output.channel_count(); ++ch) {
-				m_frame[ch] = input.samples(ch)[sample];
+				m_frame[ch] = input.samples(ch)[sample] * m_coeffs[ch];
 			}
 
 			fwht(m_frame.data(), output.channel_count());
@@ -150,6 +187,16 @@ private:
 			}
 		}
 	}
+
+	void dump_coeffs() {
+		c74::min::atoms coeff_list;
+			coeff_list.push_back("input_coeffs");
+			for (auto coeff : m_coeffs) {
+				coeff_list.push_back(coeff);
+			}
+			
+			m_status_outlet->send(coeff_list);
+	}
 	/**
 	 * @brief inlets and outlets
 	 */
@@ -168,6 +215,7 @@ private:
 	 * 
 	 */
 	std::vector<double> m_frame;
+	std::vector<double> m_coeffs;
 
 };
 

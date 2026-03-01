@@ -36,7 +36,7 @@
 						"showontab" : 1,
 						"boxes" : [  ],
 						"lines" : [  ],
-						"originid" : "pat-6"
+						"originid" : "pat-8"
 					}
 ,
 					"patching_rect" : [ 59.0, 104.0, 25.0, 22.0 ],
@@ -61,7 +61,7 @@
 						}
 ,
 						"classnamespace" : "box",
-						"rect" : [ 59.0, 140.0, 640.0, 454.0 ],
+						"rect" : [ 0.0, 26.0, 640.0, 454.0 ],
 						"gridsize" : [ 15.0, 15.0 ],
 						"showontab" : 1,
 						"boxes" : [ 							{
@@ -285,7 +285,7 @@
 
 							}
  ],
-						"originid" : "pat-8"
+						"originid" : "pat-10"
 					}
 ,
 					"patching_rect" : [ 41.0, 72.0, 35.0, 22.0 ],
@@ -310,10 +310,71 @@
 						}
 ,
 						"classnamespace" : "box",
-						"rect" : [ 0.0, 26.0, 640.0, 454.0 ],
+						"rect" : [ 59.0, 140.0, 640.0, 454.0 ],
 						"gridsize" : [ 15.0, 15.0 ],
 						"showontab" : 1,
 						"boxes" : [ 							{
+								"box" : 								{
+									"id" : "obj-21",
+									"maxclass" : "newobj",
+									"numinlets" : 2,
+									"numoutlets" : 2,
+									"outlettype" : [ "", "" ],
+									"patching_rect" : [ 486.5, 253.0, 104.0, 22.0 ],
+									"text" : "route input_coeffs"
+								}
+
+							}
+, 							{
+								"box" : 								{
+									"id" : "obj-12",
+									"maxclass" : "message",
+									"numinlets" : 2,
+									"numoutlets" : 1,
+									"outlettype" : [ "" ],
+									"patching_rect" : [ 181.0, 97.0, 74.0, 22.0 ],
+									"text" : "reset_coeffs"
+								}
+
+							}
+, 							{
+								"box" : 								{
+									"id" : "obj-23",
+									"linecount" : 2,
+									"maxclass" : "message",
+									"numinlets" : 2,
+									"numoutlets" : 1,
+									"outlettype" : [ "" ],
+									"patching_rect" : [ 561.0, 295.0, 51.0, 35.0 ],
+									"text" : "1. 1. 1. 1."
+								}
+
+							}
+, 							{
+								"box" : 								{
+									"id" : "obj-19",
+									"maxclass" : "message",
+									"numinlets" : 2,
+									"numoutlets" : 1,
+									"outlettype" : [ "" ],
+									"patching_rect" : [ 272.0, 97.0, 39.0, 22.0 ],
+									"text" : "dump"
+								}
+
+							}
+, 							{
+								"box" : 								{
+									"id" : "obj-13",
+									"maxclass" : "message",
+									"numinlets" : 2,
+									"numoutlets" : 1,
+									"outlettype" : [ "" ],
+									"patching_rect" : [ 192.0, 54.0, 113.0, 22.0 ],
+									"text" : "input_coeffs 0 0 0 0"
+								}
+
+							}
+, 							{
 								"box" : 								{
 									"id" : "obj-22",
 									"maxclass" : "toggle",
@@ -406,8 +467,8 @@
 									"id" : "obj-14",
 									"maxclass" : "newobj",
 									"numinlets" : 4,
-									"numoutlets" : 4,
-									"outlettype" : [ "signal", "signal", "signal", "signal" ],
+									"numoutlets" : 5,
+									"outlettype" : [ "signal", "signal", "signal", "signal", "" ],
 									"patching_rect" : [ 102.0, 268.0, 164.0, 22.0 ],
 									"text" : "hadamard~ 2 @normalized 1"
 								}
@@ -456,7 +517,7 @@
 									"numinlets" : 2,
 									"numoutlets" : 2,
 									"outlettype" : [ "signal", "float" ],
-									"patching_rect" : [ 486.5, 272.0, 56.0, 22.0 ],
+									"patching_rect" : [ 486.0, 323.0, 56.0, 22.0 ],
 									"sig" : 0.0
 								}
 
@@ -472,7 +533,7 @@
 									"numinlets" : 2,
 									"numoutlets" : 2,
 									"outlettype" : [ "signal", "float" ],
-									"patching_rect" : [ 444.333333333333314, 298.0, 56.0, 22.0 ],
+									"patching_rect" : [ 444.0, 349.0, 56.0, 22.0 ],
 									"sig" : 0.0
 								}
 
@@ -488,7 +549,7 @@
 									"numinlets" : 2,
 									"numoutlets" : 2,
 									"outlettype" : [ "signal", "float" ],
-									"patching_rect" : [ 402.166666666666686, 325.0, 56.0, 22.0 ],
+									"patching_rect" : [ 402.0, 376.0, 56.0, 22.0 ],
 									"sig" : 0.0
 								}
 
@@ -504,7 +565,7 @@
 									"numinlets" : 2,
 									"numoutlets" : 2,
 									"outlettype" : [ "signal", "float" ],
-									"patching_rect" : [ 360.0, 352.0, 56.0, 22.0 ],
+									"patching_rect" : [ 360.0, 403.0, 56.0, 22.0 ],
 									"sig" : 0.0
 								}
 
@@ -546,8 +607,8 @@
 									"id" : "obj-1",
 									"maxclass" : "newobj",
 									"numinlets" : 4,
-									"numoutlets" : 4,
-									"outlettype" : [ "signal", "signal", "signal", "signal" ],
+									"numoutlets" : 5,
+									"outlettype" : [ "signal", "signal", "signal", "signal", "" ],
 									"patching_rect" : [ 360.0, 221.0, 145.5, 22.0 ],
 									"text" : "hadamard~ 2"
 								}
@@ -562,7 +623,7 @@
 									"numoutlets" : 1,
 									"outlettype" : [ "" ],
 									"parameter_enable" : 0,
-									"patching_rect" : [ 148.0, 148.0, 150.0, 22.0 ]
+									"patching_rect" : [ 102.0, 136.0, 150.0, 22.0 ]
 								}
 
 							}
@@ -596,6 +657,13 @@
 									"destination" : [ "obj-14", 0 ],
 									"order" : 1,
 									"source" : [ "obj-1", 0 ]
+								}
+
+							}
+, 							{
+								"patchline" : 								{
+									"destination" : [ "obj-21", 0 ],
+									"source" : [ "obj-1", 4 ]
 								}
 
 							}
@@ -647,6 +715,20 @@
 							}
 , 							{
 								"patchline" : 								{
+									"destination" : [ "obj-1", 0 ],
+									"source" : [ "obj-12", 0 ]
+								}
+
+							}
+, 							{
+								"patchline" : 								{
+									"destination" : [ "obj-1", 0 ],
+									"source" : [ "obj-13", 0 ]
+								}
+
+							}
+, 							{
+								"patchline" : 								{
 									"destination" : [ "obj-15", 0 ],
 									"source" : [ "obj-14", 3 ]
 								}
@@ -676,6 +758,13 @@
 , 							{
 								"patchline" : 								{
 									"destination" : [ "obj-1", 0 ],
+									"source" : [ "obj-19", 0 ]
+								}
+
+							}
+, 							{
+								"patchline" : 								{
+									"destination" : [ "obj-1", 0 ],
 									"source" : [ "obj-2", 0 ]
 								}
 
@@ -684,6 +773,13 @@
 								"patchline" : 								{
 									"destination" : [ "obj-14", 0 ],
 									"source" : [ "obj-20", 0 ]
+								}
+
+							}
+, 							{
+								"patchline" : 								{
+									"destination" : [ "obj-23", 1 ],
+									"source" : [ "obj-21", 0 ]
 								}
 
 							}
@@ -709,7 +805,7 @@
 
 							}
  ],
-						"originid" : "pat-10"
+						"originid" : "pat-12"
 					}
 ,
 					"patching_rect" : [ 29.0, 42.0, 47.0, 22.0 ],
@@ -719,7 +815,7 @@
 			}
  ],
 		"lines" : [  ],
-		"originid" : "pat-4",
+		"originid" : "pat-6",
 		"dependency_cache" : [ 			{
 				"name" : "hadamard~.mxo",
 				"type" : "iLaX"
