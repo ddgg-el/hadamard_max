@@ -89,12 +89,12 @@
 						"boxes" : [ 							{
 								"box" : 								{
 									"id" : "obj-9",
-									"linecount" : 5,
+									"linecount" : 7,
 									"maxclass" : "comment",
 									"numinlets" : 1,
 									"numoutlets" : 0,
-									"patching_rect" : [ 26.0, 89.0, 150.0, 74.0 ],
-									"text" : "IMPORTANT!! The value of the coefficients is not saved within the object!\nWhen you restart the patch the values are lost!"
+									"patching_rect" : [ 4.0, 308.0, 150.0, 100.0 ],
+									"text" : "IMPORTANT!! The value of the coefficients is not saved within the object!\nWhen you restart the patch these values are lost and must be initialized again!"
 								}
 
 							}
