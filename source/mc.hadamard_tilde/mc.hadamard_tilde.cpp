@@ -5,6 +5,7 @@
 
 #include "c74_min.h"
 #include "c74_min_api.h"
+#include "ext_common.h"
 
 // callback for Max's call to 'multichanneloutputs' (max-sdk style)
 long hadamard_multichanneloutputs(c74::max::t_object* x);
@@ -54,6 +55,10 @@ public:
 		 }}
 	};
 
+	c74::min::attribute<bool> clip_output { this, "clip_output", false,
+		c74::min::description { "Clip the output values between -1 and 1" },
+	};
+
 	/**
 	 * @brief Construct a new hadamard object
 	 * 
@@ -88,19 +93,6 @@ public:
 	 * @brief Deconstructor UNUSED
 	 */ 
 	~mc_hadamard() {}
-
-	/**
-	 * @brief callback for message | normalize $1 | from Max
-	 * (an alternative to set the normalized attribute)
-	 */
-	c74::min::message<> normalize { this, "normalize", "Normalize the matrix output values. The message value should be either 1 or 0.", 
-		MIN_FUNCTION {
-			if(args.empty()) return {};
-			int a = args[0];
-			setNorm((bool)CLAMP(a, 0, 1));
-			return {};
-		}
-	};
 
 	c74::min::message<> input_coeffs { this, "input_coeffs", "Scale the input signals by a scalar. Sending this message will cause the dump outlet to output the value of the coefficients", 
 		MIN_FUNCTION {
@@ -184,7 +176,12 @@ public:
 			fwht(m_frame.data(), output.channel_count());
 
 			for (auto ch = 0; ch < output.channel_count(); ++ch) {
-				output.samples(ch)[sample] = m_frame[ch] * m_norm;
+				double out_sample = m_frame[ch] * m_norm;
+				if(clip_output) {
+					output.samples(ch)[sample] = CLAMP(out_sample, -1.0, 1.0);
+				} else {
+					output.samples(ch)[sample] = out_sample;
+				}
 			}
 		}
 	}

@@ -5,11 +5,13 @@
 
 #include "c74_min.h"
 #include "c74_min_api.h"
+#include "c74_min_logger.h"
+#include "ext_common.h"
 
 class hadamard : public c74::min::object<hadamard>, public c74::min::vector_operator<> {
 private:
 	// all these members are used in attribute<> normalized setter, hence they need to be initialized first
-	bool m_initialized = false;  
+	bool m_initialized = false;
 	double m_norm = 1.0; 
 	int m_order = 1;
 	int m_channels = static_cast<int>(pow(2, m_order)) ; // could be fix
@@ -41,6 +43,10 @@ public:
 			}
         	return args;
 		 }}
+	};
+
+	c74::min::attribute<bool> clip_output { this, "clip_output", false,
+		c74::min::description { "Clip the output values between -1 and 1" },
 	};
 
 	/**
@@ -85,20 +91,6 @@ public:
 	 * @brief Deconstructor UNUSED
 	 */ 
 	~hadamard() {}
-
-	/**
-	 * @brief callback for message | normalize $1 | from Max
-	 * (an alternative to set the normalized attribute)
-	 */
-	c74::min::message<> normalize { this, "normalize", "Normalize the matrix output values. The message value should be wither 1 or 0.", 
-		MIN_FUNCTION {
-			if(args.empty() || !m_initialized) return {};
-			int val = static_cast<int>(args[0]);
-			setNorm((bool)CLAMP(val, 0, 1));
-			normalized = val;
-			return {};
-		}
-	};
 
 	c74::min::message<> input_coeffs { this, "input_coeffs", "Scale the input signals by a scalar. Sending this message will cause the dump outlet to output the value of the coefficients", 
 		MIN_FUNCTION {
@@ -165,7 +157,12 @@ public:
 			fwht(m_frame.data(), output.channel_count());
 
 			for (auto ch = 0; ch < output.channel_count(); ++ch) {
-				output.samples(ch)[sample] = m_frame[ch] * m_norm;
+				double sample_out = m_frame[ch] * m_norm;
+				if(clip_output) {
+					output.samples(ch)[sample] = CLAMP(sample_out, -1.0, 1.0);
+				} else {
+					output.samples(ch)[sample] = sample_out;
+				}
 			}
 		}
 	}
