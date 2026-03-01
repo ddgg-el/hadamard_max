@@ -5,18 +5,16 @@
 
 #include "c74_min.h"
 #include "c74_min_api.h"
-#include "c74_min_doc.h"
-#include <cstddef>
-#include <vector>
 
+// callback for Max's call to 'multichanneloutputs' (max-sdk style)
+long hadamard_multichanneloutputs(c74::max::t_object* x);
 
-class hadamard : public c74::min::object<hadamard>, public c74::min::vector_operator<> {
+class mc_hadamard : public c74::min::object<mc_hadamard>, public c74::min::mc_operator<> {
 private:
 	// all these members are used in attribute<> normalized setter, hence they need to be initialized first
 	bool m_initialized = false;  
 	double m_norm = 1.0; 
 	int m_order = 1;
-	int m_channels = static_cast<int>(pow(2, m_order)) ; // could be fix
 
 	void setNorm(bool normalized) {
 		m_norm = normalized ? 1.0 / std::sqrt(static_cast<double>(m_channels)) : 1.0;
@@ -26,6 +24,16 @@ public:
 	MIN_DESCRIPTION {"Walsh-Hadamard Transform Object"};
 	MIN_TAGS {"audio, processing"};
 	MIN_AUTHOR {"Davide Gagliardi - Davide Bardi"};
+
+	
+	int m_channels = static_cast<int>(pow(2, m_order)) ; // could be fix
+
+	/**
+	 * @brief multichannel IO
+	 */
+	c74::min::inlet<> m_inlet { this, "(multichannelsignal) input"};
+	c74::min::outlet<> m_outlet { this, "(multichannelsignal) output", "multichannelsignal"};
+
 	/**
 	 * @brief first object's argument -> order (int) | range (0 - 7) see constructor
 	 */
@@ -51,7 +59,7 @@ public:
 	 * 
 	 * @param args (only one int (order) expected)
 	 */
-	hadamard(const c74::min::atoms& args = {}) {
+	mc_hadamard(const c74::min::atoms& args = {}) {
 		if(args.size() > 0) {
 			m_order = static_cast<int>(args[0]);	
 		} else {
@@ -71,20 +79,13 @@ public:
 		m_channels = static_cast<int>(pow(2, m_order));
 		m_frame.assign(m_channels, 0.0);
 
-		for (auto i = 0; i < m_channels; ++i) {
-			    auto an_inlet = std::make_unique<c74::min::inlet<>>(this, "(signal) an input channel", "signal");
-				auto an_outlet = std::make_unique<c74::min::outlet<>>(this, "(signal) an outputchannel", "signal");
-				m_inlets.push_back(std::move(an_inlet));
-				m_outlets.push_back(std::move(an_outlet));
-		}
-
 		m_initialized = true;
 	}
 
 	/**
 	 * @brief Deconstructor UNUSED
 	 */ 
-	~hadamard() {}
+	~mc_hadamard() {}
 
 	/**
 	 * @brief callback for message | normalize $1 | from Max
@@ -92,10 +93,22 @@ public:
 	 */
 	c74::min::message<> normalize { this, "normalize", "Normalize the matrix output values. The message value should be wither 1 or 0.", 
 		MIN_FUNCTION {
-			if(args.empty() || !m_initialized) return {};
-			int val = static_cast<int>(args[0]);
-			setNorm((bool)CLAMP(val, 0, 1));
-			normalized = val;
+			if(args.empty()) return {};
+			int a = args[0];
+			setNorm((bool)CLAMP(a, 0, 1));
+			return {};
+		}
+	};
+
+	/**
+	 * @brief max-sdk style 'class_setup' implementation to add the 'multichanneloutputs' method
+	 */
+	c74::min::message<> maxclass_setup { this, "maxclass_setup", 
+		MIN_FUNCTION {
+			UNUSED(this);   // silences compiler warning since we don't access class members
+			c74::max::t_class* c = args[0];
+			c74::max::class_addmethod(c, reinterpret_cast<c74::max::method>(hadamard_multichanneloutputs),
+                "multichanneloutputs", c74::max::A_CANT, 0);
 			return {};
 		}
 	};
@@ -110,7 +123,7 @@ public:
 			vector_size(args[1]);
 			return {};
 		}
-	};	
+	};
 
 	/**
 	 * @brief Audio loop
@@ -121,7 +134,11 @@ public:
 	void operator()(c74::min::audio_bundle input, c74::min::audio_bundle output) {
 		for(auto sample = 0; sample < output.frame_count(); ++sample) {
 			for (auto ch = 0; ch < output.channel_count(); ++ch) {
-				m_frame[ch] = input.samples(ch)[sample];
+				if(ch < input.channel_count()) {
+					m_frame[ch] = input.samples(ch)[sample];
+				} else {
+					m_frame[ch] = 0;
+				}
 			}
 
 			fwht(m_frame.data(), output.channel_count());
@@ -150,11 +167,7 @@ private:
 			}
 		}
 	}
-	/**
-	 * @brief inlets and outlets
-	 */
-	std::vector<std::unique_ptr<c74::min::inlet<>>> m_inlets;
-	std::vector<std::unique_ptr<c74::min::outlet<>>> m_outlets;
+	
 	/**
 	 * @brief an `audio_bundle.samples()` (see #`operator()`) has the shape:
 	 
@@ -171,4 +184,18 @@ private:
 
 };
 
-MIN_EXTERNAL(hadamard);
+/**
+ * @brief Notify the number of output channel 
+ * 
+ * @param x a t_class* to the mc.hadamard~ instance
+ * @param index the outlet index
+
+ * @return long 
+ */
+long hadamard_multichanneloutputs(c74::max::t_object* x) {
+	auto* wrapper = reinterpret_cast<c74::min::minwrap<mc_hadamard>*>(x);
+	return wrapper->m_min_object.m_channels;
+};
+
+MIN_EXTERNAL(mc_hadamard);
+
