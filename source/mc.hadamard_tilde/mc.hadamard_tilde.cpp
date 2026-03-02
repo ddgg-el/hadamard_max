@@ -5,6 +5,7 @@
 
 #include "c74_min.h"
 #include "c74_min_api.h"
+#include "ext_proto.h"
 
 // callback for Max's call to 'multichanneloutputs' (max-sdk style)
 long hadamard_multichanneloutputs(c74::max::t_object* x);
@@ -150,8 +151,12 @@ public:
 		MIN_FUNCTION {
 			UNUSED(this);   // silences compiler warning since we don't access class members
 			c74::max::t_class* c = args[0];
+			
 			c74::max::class_addmethod(c, reinterpret_cast<c74::max::method>(hadamard_multichanneloutputs),
                 "multichanneloutputs", c74::max::A_CANT, 0);
+			
+				// fix that allows to share the help file with hadamard~
+			c74::max::class_setname(const_cast<char*>("mc.hadamard~"), const_cast<char*>("hadamard~"));
 			return {};
 		}
 	};
