@@ -54,7 +54,6 @@ public:
 			MIN_FUNCTION { 
 				if(initialized()) {
 					m_coeffs_buf.set(args[0]);
-					cout << args[0] << c74::min::endl;
 				}
 				return {}; 
 			}
@@ -215,7 +214,6 @@ private:
 			dump_coeffs();
 			return;
 		} 
-		cout << "updating coefficient's vector" << c74::min::endl;
 		int samples_to_read = std::min(static_cast<int>(buf.frame_count()), m_channels);
 		for (int i = 0; i < samples_to_read; ++i) {
 			m_coeffs[i] = buf.lookup(i, 0); // channel 0
@@ -265,7 +263,6 @@ private:
 				// buffer size changed, check it still matches m_channels
 				cwarn << "Notification unknow: " << notification << c74::min::endl;
 			}
-			cout << notification << c74::min::endl;
 			return {}; 
 		}
 	};

@@ -64,7 +64,6 @@ public:
 			MIN_FUNCTION { 
 				if(initialized()) {
 					m_coeffs_buf.set(args[0]);
-					cout << args[0] << c74::min::endl;
 				}
 				return {}; 
 			}
@@ -280,7 +279,6 @@ private:
 				// buffer size changed, check it still matches m_channels
 				cwarn << "Notification unknow: " << notification << c74::min::endl;
 			}
-			cout << notification << c74::min::endl;
 			return {}; 
 		}
 	};
