@@ -5,3 +5,5 @@ docs/
 .vscode/
 .cache/
 studies/
+
+*_test.cpp

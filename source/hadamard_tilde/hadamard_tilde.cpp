@@ -6,7 +6,6 @@
 #include "c74_min.h"
 #include "c74_min_api.h"
 #include "c74_min_logger.h"
-#include "ext_common.h"
 
 class hadamard : public c74::min::object<hadamard>, public c74::min::vector_operator<> {
 private:
@@ -47,6 +46,19 @@ public:
 
 	c74::min::attribute<bool> clip_output { this, "clip_output", false,
 		c74::min::description { "Clip the output values between -1 and 1" },
+	};
+
+	c74::min::attribute<c74::min::symbol> coeffs_buffer { this, "coeffs_buffer", "", 
+		c74::min::description { "The name of a buffer into which input scaling coefficients are stored. This buffer should be mono and should have 2^order number of channels" },
+		c74::min::setter {
+			MIN_FUNCTION { 
+				if(initialized()) {
+					m_coeffs_buf.set(args[0]);
+					cout << args[0] << c74::min::endl;
+				}
+				return {}; 
+			}
+		}
 	};
 
 	/**
@@ -195,6 +207,30 @@ private:
 			
 			m_status_outlet->send(coeff_list);
 	}
+
+	void load_coeffs_from_buffer() {
+		c74::min::buffer_lock<> buf(m_coeffs_buf);
+		if (!buf.valid()) {
+			m_coeffs.assign(m_channels, 0.0);
+			dump_coeffs();
+			return;
+		} 
+		cout << "updating coefficient's vector" << c74::min::endl;
+		int samples_to_read = std::min(static_cast<int>(buf.frame_count()), m_channels);
+		for (int i = 0; i < samples_to_read; ++i) {
+			m_coeffs[i] = buf.lookup(i, 0); // channel 0
+		}
+
+		// warn if buffer is shorter than expected
+		if (buf.frame_count() < m_channels) {
+			cwarn << "Buffer too short. Missing coefficients set to 0.0" << c74::min::endl;
+			for (int i = samples_to_read; i < m_channels; ++i) {
+				m_coeffs[i] = 0.0;
+			}
+		}
+		dump_coeffs();
+	}
+
 	/**
 	 * @brief inlets and outlets
 	 */
@@ -214,6 +250,25 @@ private:
 	 */
 	std::vector<double> m_frame;
 	std::vector<double> m_coeffs;
+	c74::min::buffer_reference m_coeffs_buf { this , 
+		MIN_FUNCTION { 
+			c74::min::symbol notification = args[0];
+
+			if (notification == "modified" || notification == "binding") {
+				// buffer contents changed, re-read coefficients
+				load_coeffs_from_buffer();
+			} else if (notification == "unbinding") {
+				// buffer is gone, reset coefficients to safe defaults
+				m_coeffs.assign(m_channels, 1.0);
+				dump_coeffs();
+			} else {
+				// buffer size changed, check it still matches m_channels
+				cwarn << "Notification unknow: " << notification << c74::min::endl;
+			}
+			cout << notification << c74::min::endl;
+			return {}; 
+		}
+	};
 
 };
 
