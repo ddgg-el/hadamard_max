@@ -5,11 +5,12 @@
 
 #include "c74_min.h"
 #include "c74_min_api.h"
+#include "c74_min_logger.h"
 
 class hadamard : public c74::min::object<hadamard>, public c74::min::vector_operator<> {
 private:
 	// all these members are used in attribute<> normalized setter, hence they need to be initialized first
-	bool m_initialized = false;  
+	bool m_initialized = false;
 	double m_norm = 1.0; 
 	int m_order = 1;
 	int m_channels = static_cast<int>(pow(2, m_order)) ; // could be fix
@@ -41,6 +42,22 @@ public:
 			}
         	return args;
 		 }}
+	};
+
+	c74::min::attribute<bool> clip_output { this, "clip_output", false,
+		c74::min::description { "Clip the output values between -1 and 1" },
+	};
+
+	c74::min::attribute<c74::min::symbol> coeffs_buffer { this, "coeffs_buffer", "", 
+		c74::min::description { "The name of a buffer into which input scaling coefficients are stored. This buffer should be mono and should have 2^order number of channels" },
+		c74::min::setter {
+			MIN_FUNCTION { 
+				if(initialized()) {
+					m_coeffs_buf.set(args[0]);
+				}
+				return {}; 
+			}
+		}
 	};
 
 	/**
@@ -85,20 +102,6 @@ public:
 	 * @brief Deconstructor UNUSED
 	 */ 
 	~hadamard() {}
-
-	/**
-	 * @brief callback for message | normalize $1 | from Max
-	 * (an alternative to set the normalized attribute)
-	 */
-	c74::min::message<> normalize { this, "normalize", "Normalize the matrix output values. The message value should be wither 1 or 0.", 
-		MIN_FUNCTION {
-			if(args.empty() || !m_initialized) return {};
-			int val = static_cast<int>(args[0]);
-			setNorm((bool)CLAMP(val, 0, 1));
-			normalized = val;
-			return {};
-		}
-	};
 
 	c74::min::message<> input_coeffs { this, "input_coeffs", "Scale the input signals by a scalar. Sending this message will cause the dump outlet to output the value of the coefficients", 
 		MIN_FUNCTION {
@@ -165,7 +168,12 @@ public:
 			fwht(m_frame.data(), output.channel_count());
 
 			for (auto ch = 0; ch < output.channel_count(); ++ch) {
-				output.samples(ch)[sample] = m_frame[ch] * m_norm;
+				double sample_out = m_frame[ch] * m_norm;
+				if(clip_output) {
+					output.samples(ch)[sample] = CLAMP(sample_out, -1.0, 1.0);
+				} else {
+					output.samples(ch)[sample] = sample_out;
+				}
 			}
 		}
 	}
@@ -198,6 +206,29 @@ private:
 			
 			m_status_outlet->send(coeff_list);
 	}
+
+	void load_coeffs_from_buffer() {
+		c74::min::buffer_lock<> buf(m_coeffs_buf);
+		if (!buf.valid()) {
+			m_coeffs.assign(m_channels, 0.0);
+			dump_coeffs();
+			return;
+		} 
+		int samples_to_read = std::min(static_cast<int>(buf.frame_count()), m_channels);
+		for (int i = 0; i < samples_to_read; ++i) {
+			m_coeffs[i] = buf.lookup(i, 0); // channel 0
+		}
+
+		// warn if buffer is shorter than expected
+		if (buf.frame_count() < m_channels) {
+			cwarn << "Buffer too short. Missing coefficients set to 0.0" << c74::min::endl;
+			for (int i = samples_to_read; i < m_channels; ++i) {
+				m_coeffs[i] = 0.0;
+			}
+		}
+		dump_coeffs();
+	}
+
 	/**
 	 * @brief inlets and outlets
 	 */
@@ -217,6 +248,24 @@ private:
 	 */
 	std::vector<double> m_frame;
 	std::vector<double> m_coeffs;
+	c74::min::buffer_reference m_coeffs_buf { this , 
+		MIN_FUNCTION { 
+			c74::min::symbol notification = args[0];
+
+			if (notification == "modified" || notification == "binding") {
+				// buffer contents changed, re-read coefficients
+				load_coeffs_from_buffer();
+			} else if (notification == "unbinding") {
+				// buffer is gone, reset coefficients to safe defaults
+				m_coeffs.assign(m_channels, 1.0);
+				dump_coeffs();
+			} else {
+				// buffer size changed, check it still matches m_channels
+				cwarn << "Notification unknow: " << notification << c74::min::endl;
+			}
+			return {}; 
+		}
+	};
 
 };
 

@@ -5,6 +5,7 @@
 
 #include "c74_min.h"
 #include "c74_min_api.h"
+#include "ext_proto.h"
 
 // callback for Max's call to 'multichanneloutputs' (max-sdk style)
 long hadamard_multichanneloutputs(c74::max::t_object* x);
@@ -54,6 +55,22 @@ public:
 		 }}
 	};
 
+	c74::min::attribute<bool> clip_output { this, "clip_output", false,
+		c74::min::description { "Clip the output values between -1 and 1" },
+	};
+
+	c74::min::attribute<c74::min::symbol> coeffs_buffer { this, "coeffs_buffer", "", 
+		c74::min::description { "The name of a buffer into which input scaling coefficients are stored. This buffer should be mono and should have 2^order number of channels" },
+		c74::min::setter {
+			MIN_FUNCTION { 
+				if(initialized()) {
+					m_coeffs_buf.set(args[0]);
+				}
+				return {}; 
+			}
+		}
+	};
+
 	/**
 	 * @brief Construct a new hadamard object
 	 * 
@@ -88,19 +105,6 @@ public:
 	 * @brief Deconstructor UNUSED
 	 */ 
 	~mc_hadamard() {}
-
-	/**
-	 * @brief callback for message | normalize $1 | from Max
-	 * (an alternative to set the normalized attribute)
-	 */
-	c74::min::message<> normalize { this, "normalize", "Normalize the matrix output values. The message value should be either 1 or 0.", 
-		MIN_FUNCTION {
-			if(args.empty()) return {};
-			int a = args[0];
-			setNorm((bool)CLAMP(a, 0, 1));
-			return {};
-		}
-	};
 
 	c74::min::message<> input_coeffs { this, "input_coeffs", "Scale the input signals by a scalar. Sending this message will cause the dump outlet to output the value of the coefficients", 
 		MIN_FUNCTION {
@@ -147,8 +151,12 @@ public:
 		MIN_FUNCTION {
 			UNUSED(this);   // silences compiler warning since we don't access class members
 			c74::max::t_class* c = args[0];
+			
 			c74::max::class_addmethod(c, reinterpret_cast<c74::max::method>(hadamard_multichanneloutputs),
                 "multichanneloutputs", c74::max::A_CANT, 0);
+			
+				// fix that allows to share the help file with hadamard~
+			c74::max::class_setname(const_cast<char*>("mc.hadamard~"), const_cast<char*>("hadamard~"));
 			return {};
 		}
 	};
@@ -184,7 +192,12 @@ public:
 			fwht(m_frame.data(), output.channel_count());
 
 			for (auto ch = 0; ch < output.channel_count(); ++ch) {
-				output.samples(ch)[sample] = m_frame[ch] * m_norm;
+				double out_sample = m_frame[ch] * m_norm;
+				if(clip_output) {
+					output.samples(ch)[sample] = CLAMP(out_sample, -1.0, 1.0);
+				} else {
+					output.samples(ch)[sample] = out_sample;
+				}
 			}
 		}
 	}
@@ -217,6 +230,29 @@ private:
 			
 			m_status_outlet.send(coeff_list);
 	}
+
+	void load_coeffs_from_buffer() {
+		c74::min::buffer_lock<> buf(m_coeffs_buf);
+		if (!buf.valid()) {
+			m_coeffs.assign(m_channels, 0.0);
+			dump_coeffs();
+			return;
+		} 
+
+		int samples_to_read = std::min(static_cast<int>(buf.frame_count()), m_channels);
+		for (int i = 0; i < samples_to_read; ++i) {
+			m_coeffs[i] = buf.lookup(i, 0); // channel 0
+		}
+
+		// warn if buffer is shorter than expected
+		if (buf.frame_count() < m_channels) {
+			cwarn << "Buffer too short. Missing coefficients set to 0.0" << c74::min::endl;
+			for (int i = samples_to_read; i < m_channels; ++i) {
+				m_coeffs[i] = 0.0;
+			}
+		}
+		dump_coeffs();
+	}
 	
 	/**
 	 * @brief an `audio_bundle.samples()` (see #`operator()`) has the shape:
@@ -232,6 +268,25 @@ private:
 	 */
 	std::vector<double> m_frame;
 	std::vector<double> m_coeffs;
+
+	c74::min::buffer_reference m_coeffs_buf { this , 
+		MIN_FUNCTION { 
+			c74::min::symbol notification = args[0];
+
+			if (notification == "modified" || notification == "binding") {
+				// buffer contents changed, re-read coefficients
+				load_coeffs_from_buffer();
+			} else if (notification == "unbinding") {
+				// buffer is gone, reset coefficients to safe defaults
+				m_coeffs.assign(m_channels, 1.0);
+				dump_coeffs();
+			} else {
+				// buffer size changed, check it still matches m_channels
+				cwarn << "Notification unknow: " << notification << c74::min::endl;
+			}
+			return {}; 
+		}
+	};
 
 };
 
