@@ -66,7 +66,7 @@ public:
 				if(initialized()) {
 					m_coeffs_buf.set(args[0]);
 				}
-				return {}; 
+				return args; 
 			}
 		}
 	};

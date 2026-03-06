@@ -32,8 +32,7 @@ public:
 	/**
 	 * @brief @normalized 0|1 default 0 (no normalization)
 	 */
-	c74::min::attribute<bool> normalized { this, 
-		"normalized", true,
+	c74::min::attribute<bool> normalized { this, "normalized", true,
 		c74::min::description { "Normalize the output by 1 / sqrt(num_channels)" },
 		c74::min::setter { MIN_FUNCTION {
 			if(initialized()){
@@ -55,7 +54,7 @@ public:
 				if(initialized()) {
 					m_coeffs_buf.set(args[0]);
 				}
-				return {}; 
+				return args; 
 			}
 		}
 	};
@@ -106,12 +105,12 @@ public:
 	c74::min::message<> input_coeffs { this, "input_coeffs", "Scale the input signals by a scalar. Sending this message will cause the dump outlet to output the value of the coefficients", 
 		MIN_FUNCTION {
 			if(args.empty() || !m_initialized) return {};
-			if(args.size() > m_channels) {
+			if(static_cast<int>(args.size()) > m_channels) {
 				int additional_coeffs = args.size() - m_channels;
 				cwarn << "List too long. Ignoring last ";
 				cwarn << (additional_coeffs == 1 ? "coefficient" : std::to_string(additional_coeffs) + " coefficients") << c74::min::endl;
 			}
-			for (int ch = 0; ch < m_coeffs.size(); ++ch) {
+			for (size_t ch = 0; ch < m_coeffs.size(); ++ch) {
 				if(ch < args.size()) {
 					m_coeffs[ch] = args[ch];
 				} else {
@@ -126,7 +125,7 @@ public:
 
 	c74::min::message<> reset_coeffs { this, "reset_coeffs", "Set all the input coefficients to 1. Sending this message will cause the dump outlet to output the value of the coefficients", 
 		MIN_FUNCTION {
-			for (int ch = 0; ch < m_coeffs.size(); ++ch) {
+			for (size_t ch = 0; ch < m_coeffs.size(); ++ch) {
 				m_coeffs[ch] = 1.0;
 			}
 			dump_coeffs();
@@ -220,7 +219,7 @@ private:
 		}
 
 		// warn if buffer is shorter than expected
-		if (buf.frame_count() < m_channels) {
+		if (static_cast<int>(buf.frame_count()) < m_channels) {
 			cwarn << "Buffer too short. Missing coefficients set to 0.0" << c74::min::endl;
 			for (int i = samples_to_read; i < m_channels; ++i) {
 				m_coeffs[i] = 0.0;
