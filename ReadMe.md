@@ -48,3 +48,8 @@ cd hadamard_max
 cmake -B build .
 cmake --build build 
 ```
+
+Authors
+-----------------------
+- [Davide Gagliardi](https://github.com/ddgg-el) - info@davidegagliardi.eu
+- [Davide Bardi](https://github.com/dvddmg) - davide13bardi@gmail.com
