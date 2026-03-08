@@ -6,6 +6,16 @@ Compatible with **macOS** and **Windows**.
 
 Require **MaxMSP 8.6.5** or later; for [compiling](#build) **CMake 3.19** or later and **cpp compiler**.
 
+Install
+-----------------------
+
+- Download the latest release according your operating system
+- Unzip the folder and move it to the `Packages` path of MaxMSP
+
+    MacOS: `'/Users/USER_NAME/Documents/Max 8/Packages/'`
+
+- Launch MaxMSP
+
 Arguments
 -----------------------
 - **order** (int, default: 1): specified the order of the matrix between 1 and 7.
