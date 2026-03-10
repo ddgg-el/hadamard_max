@@ -1,4 +1,4 @@
-Walsh-Hdamard Transform
+Walsh-Hadamard Transform
 =======================
 Implementation of the Fast Walsh-Hadamard Transform in MaxMSP. Available as `hadamard~` (single-channel inlet/outlet pairs) and `mc.hadamard~` (multichannel).
 
